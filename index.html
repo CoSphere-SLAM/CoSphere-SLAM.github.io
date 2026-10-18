@@ -224,15 +224,15 @@ const ROBOTS = FRAMES.map((f, k) => ({
   gt: `assets/render/r${k}_gt.jpg`, single: `assets/render/r${k}_single.jpg`, ours: `assets/render/r${k}_ours.jpg`
 }));
 
-/* Benchmark table; the better value in each column is set in bold (lower ATE, higher PSNR). */
+/* Benchmark table; the better value in each column is set in bold (lower ATE). */
 const BENCH = {
-  note: 'Holo360D Indoor_002 with five handheld panoramic robots; PanoGS-SLAM runs on each robot alone. ATE: keyframe ATE RMSE (m), each robot aligned to its reference trajectory by its own Sim(3), lower is better; with one Sim(3) shared by all five robots CoSphere-SLAM reaches 0.120 m. PSNR (dB) of the held-out panoramas shown in Results, higher is better.',
-  groups: [['ATE (m)', 6], ['PSNR (dB)', 5]],
-  columns: ['Robot 0', 'Robot 1', 'Robot 2', 'Robot 3', 'Robot 4', 'Mean', 'Robot 0', 'Robot 1', 'Robot 2', 'Robot 3', 'Robot 4'],
-  digits: [3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2],
-  lower: [true, true, true, true, true, true, false, false, false, false, false],
-  rows: [['PanoGS-SLAM', 0.240, 0.090, 0.310, 0.356, 0.118, 0.223, 27.33, 18.60, 18.53, 29.84, 29.14]],
-  ours: ['CoSphere-SLAM (ours)', 0.134, 0.026, 0.077, 0.154, 0.025, 0.083, 27.93, 18.47, 18.60, 29.53, 29.01]
+  note: 'Holo360D Indoor_002 with five handheld panoramic robots; PanoGS-SLAM runs on each robot alone. ATE: keyframe ATE RMSE (m), each robot aligned to its reference trajectory by its own Sim(3), lower is better; with one Sim(3) shared by all five robots CoSphere-SLAM reaches 0.120 m.',
+  groups: [['ATE (m)', 6]],
+  columns: ['Robot 0', 'Robot 1', 'Robot 2', 'Robot 3', 'Robot 4', 'Mean'],
+  digits: [3, 3, 3, 3, 3, 3],
+  lower: [true, true, true, true, true, true],
+  rows: [['PanoGS-SLAM', 0.240, 0.090, 0.310, 0.356, 0.118, 0.223]],
+  ours: ['CoSphere-SLAM (ours)', 0.134, 0.026, 0.077, 0.154, 0.025, 0.083]
 };
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
