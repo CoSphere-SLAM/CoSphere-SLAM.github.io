@@ -211,10 +211,10 @@ footer{padding:2.5rem 0 3rem;border-top:1px solid var(--line);font-size:.9rem;te
 const LINKS = {paper: '', arxiv: '', code: ''};
 
 const STATS = [
-  {value: '5', label: 'Handheld panoramic robots'},
+  {value: '5 × 5', label: 'Scenes × handheld panoramic robots'},
   {value: '360°', label: 'Field of view per camera'},
-  {value: '0.083 m', label: 'Mean per-robot keyframe ATE'},
-  {value: '0.120 m', label: 'ATE under one shared Sim(3)'}
+  {value: '0.047 m', label: 'Mean per-robot keyframe ATE (PanoGS-SLAM alone: 0.120 m)'},
+  {value: '−61%', label: 'Trajectory error relative to each robot alone'}
 ];
 
 /* Holo360D Indoor_002: one held-out panorama per robot. */
@@ -226,13 +226,13 @@ const ROBOTS = FRAMES.map((f, k) => ({
 
 /* Benchmark table; the better value in each column is set in bold (lower ATE). */
 const BENCH = {
-  note: 'Holo360D Indoor_002 with five handheld panoramic robots; PanoGS-SLAM runs on each robot alone. ATE: keyframe ATE RMSE (m), each robot aligned to its reference trajectory by its own Sim(3), lower is better; with one Sim(3) shared by all five robots CoSphere-SLAM reaches 0.120 m.',
+  note: 'Five Holo360D scenes, each split into five handheld panoramic robots; PanoGS-SLAM runs on each robot alone. Each entry is the keyframe ATE RMSE (m) averaged over the five robots of the scene, every robot aligned to its reference trajectory by its own Sim(3); lower is better. CoSphere-SLAM is better than PanoGS-SLAM on at least four of the five robots in every scene. With one Sim(3) shared by all five robots CoSphere-SLAM reaches 0.116, 0.088, 0.032, 0.019 and 0.114 m.',
   groups: [['ATE (m)', 6]],
-  columns: ['Robot 0', 'Robot 1', 'Robot 2', 'Robot 3', 'Robot 4', 'Mean'],
+  columns: ['Indoor_002', 'Indoor_005', 'Indoor_006', 'Indoor_007', 'Indoor_009', 'Mean'],
   digits: [3, 3, 3, 3, 3, 3],
   lower: [true, true, true, true, true, true],
-  rows: [['PanoGS-SLAM', 0.240, 0.090, 0.310, 0.356, 0.118, 0.223]],
-  ours: ['CoSphere-SLAM (ours)', 0.134, 0.026, 0.077, 0.154, 0.025, 0.083]
+  rows: [['PanoGS-SLAM', 0.223, 0.136, 0.104, 0.052, 0.086, 0.120]],
+  ours: ['CoSphere-SLAM (ours)', 0.081, 0.065, 0.029, 0.015, 0.044, 0.047]
 };
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
@@ -294,8 +294,8 @@ chips(document.getElementById('results-chips'), [{items: [{label: 'All robots', 
     cap.innerHTML = `<span class="fig-no">Figure 2.</span> ${esc(r.name)}, held-out frame ${r.frame}. Left to right: ground truth, PanoGS-SLAM run on this robot alone, and the merged CoSphere-SLAM map of all five robots.`;
   }
 });
-stage(document.getElementById('traj-stage'), 'assets/img/traj_indoor002.png', 'Keyframe trajectories of the five robots');
-document.getElementById('traj-caption').innerHTML = '<span class="fig-no">Figure 3.</span> Holo360D Indoor_002: keyframe trajectories of all five robots in top view, coloured by position error (m), reference dashed. Left: each robot alone with PanoGS-SLAM, aligned separately; right: CoSphere-SLAM, all robots under one Sim(3) alignment.';
+stage(document.getElementById('traj-stage'), 'assets/img/traj_5scenes.png', 'Keyframe trajectories of the five robots in five scenes');
+document.getElementById('traj-caption').innerHTML = '<span class="fig-no">Figure 3.</span> Keyframe trajectories of all five robots in five Holo360D scenes (rows), top view, coloured by position error (m), reference dashed. Left: each robot alone with PanoGS-SLAM, aligned separately (ATE per robot); right: CoSphere-SLAM, all robots under one Sim(3) alignment. <a href="assets/img/traj_5scenes.pdf">PDF</a>';
 
 /* Comparison */
 (function () {
