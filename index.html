@@ -3,24 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="CoSphere-SLAM: Collaborative Panoramic Gaussian SLAM on the Sphere">
+<meta name="description" content="CoSphere-SLAM: Multi-Agent Panoramic Gaussian Splatting SLAM with Spherical Loop Closure">
 <title>CoSphere-SLAM</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%23D9702A' stroke-width='3'/%3E%3Cellipse cx='16' cy='16' rx='13' ry='5' fill='none' stroke='%236C8EBF' stroke-width='2'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700&family=Noto+Sans:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans:wght@400;500;700&display=swap">
 <style>
 :root{
-  --ink:#16201F;
-  --line:#E3E8E7;
-  --accent:#139C94;
-  --accent-tint:#EAF6F4;
-  --tp1:#0E93A8; --tp2:#13A396; --tp3:#28AE84; --tp4:#52B872;
-  --grad:linear-gradient(100deg,var(--tp1) 0%,var(--tp2) 38%,var(--tp3) 68%,var(--tp4) 100%);
-  --head:"Plus Jakarta Sans","Noto Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --ink:#1A1A1A;
+  --line:#E6E8EC;
+  --a1:#B85450; --a2:#9673A6; --a3:#82B366; --a4:#6C8EBF;
+  --ours:#D9702A; --ours-ink:#B4561A; --ours-tint:#FDF2E9;
+  --grad:linear-gradient(100deg,var(--a1) 0%,var(--a2) 34%,var(--a4) 67%,var(--a3) 100%);
+  --head:"Google Sans","Noto Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   --body:"Noto Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
-  --r-lg:10px; --r-md:8px;
-  --card-line:#DCE3E2;
+  --r-lg:16px; --r-md:12px;
+  --card-line:rgba(40,40,60,.10);
+  --card-shadow:0 1px 2px rgba(30,30,50,.04),0 10px 28px -14px rgba(40,40,80,.20);
+  --card-shadow-hi:0 2px 4px rgba(30,30,50,.05),0 18px 36px -16px rgba(40,40,80,.28);
+  --frost:rgba(255,255,255,.82);
+  --first:#F6CFCB; --second:#FBE3C9;
 }
 *,*::before,*::after{box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:72px;overflow-x:hidden}
@@ -30,312 +34,637 @@ img{display:block;max-width:100%}
 a{color:inherit}
 button{font:inherit;color:inherit}
 [hidden]{display:none!important}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
-
+:focus-visible{outline:2px solid var(--ours);outline-offset:2px;border-radius:4px}
 .container{width:100%;max-width:1100px;margin-inline:auto;padding-inline:1.5rem}
-.container.narrow{max-width:820px}
+.container.narrow{max-width:860px}
 
 /* Header */
-.hero{padding:5rem 0 2.25rem;text-align:center}
-.title{max-width:60rem;margin:0 auto;font-family:var(--head);font-size:clamp(1.9rem,4.4vw,3.3rem);font-weight:500;line-height:1.16;letter-spacing:-.02em;text-wrap:balance}
+.hero{padding:5.5rem 0 2.25rem;text-align:center}
+.title{max-width:62rem;margin:0 auto;font-family:var(--head);font-size:clamp(1.9rem,4.4vw,3.3rem);font-weight:500;line-height:1.15;letter-spacing:-.022em;text-wrap:balance}
 .wordmark{font-weight:700;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.authors{margin-top:1.8rem;font-family:var(--head);font-size:1.2rem}
-.venue{margin-top:1rem;font-family:var(--head);font-size:1.05rem;font-weight:700}
-.links{display:flex;flex-wrap:wrap;justify-content:center;gap:.7rem;margin-top:1.9rem}
-
-.btn{position:relative;display:inline-flex;align-items:center;gap:.5em;height:2.7rem;padding-inline:1.3rem;border:0;border-radius:999px;background:#3A3F45;color:#fff;font-family:var(--head);font-size:1.05rem;font-weight:500;white-space:nowrap;text-decoration:none;cursor:pointer;transition:background .2s ease}
-.btn svg{width:17px;height:17px;flex:none;fill:currentColor}
-.btn-paper{background:#3A3F45}.btn-paper:hover{background:#2A2E33}
-.btn-arxiv{background:#B31B1B}.btn-arxiv:hover{background:#961616}
-.btn-github{background:#56606B}.btn-github:hover{background:#454D57}
+.authors{margin-top:1.8rem;font-family:var(--head);font-size:1.25rem}
+.venue{margin-top:1rem;font-family:var(--head);font-size:1.1rem;font-weight:700}
+.links{display:flex;flex-wrap:wrap;justify-content:center;gap:.8rem;margin-top:1.9rem}
+.btn{--glow:rgba(0,0,0,.4);position:relative;display:inline-flex;align-items:center;gap:.45em;height:2.5rem;padding-inline:1.1rem;border:0;border-radius:999px;background:#363636;color:#fff;font-family:var(--head);font-size:1.02rem;font-weight:500;white-space:nowrap;text-decoration:none;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.08);transition:transform .2s ease,box-shadow .2s ease,background .2s ease}
+.btn svg{width:16px;height:16px;flex:none;fill:currentColor}
+.btn:hover{transform:translateY(-2px);box-shadow:0 12px 22px -10px var(--glow),0 2px 4px rgba(0,0,0,.06)}
+.btn-paper{--glow:rgba(60,64,70,.5);background:#3F4349}
+.btn-arxiv{--glow:rgba(205,72,70,.55);background:#CD4846}
+.btn-github{--glow:rgba(76,84,94,.5);background:#4C545E}
 .btn[aria-disabled="true"]{cursor:default}
-.btn[aria-disabled="true"]::after{content:"Coming soon";position:absolute;left:50%;top:calc(100% + .55rem);padding:.3rem .65rem;border-radius:.4rem;background:var(--ink);color:#fff;font-size:.75rem;white-space:nowrap;opacity:0;pointer-events:none;transform:translateX(-50%);transition:opacity .18s ease;z-index:5}
-.btn[aria-disabled="true"]:hover::after{opacity:1}
-
-/* Chips: underlined tabs */
-.chips{display:flex;flex-wrap:wrap;justify-content:center;gap:.4rem 1.8rem;margin-bottom:1.2rem}
-.chip-group{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.2rem .3rem}
-.chip-title{margin-right:.5rem;font-family:var(--head);font-size:.8rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-.chip{padding:.4rem .85rem;border:0;border-bottom:2px solid transparent;background:none;font-family:var(--head);font-size:1rem;cursor:pointer}
-.chip:hover{color:var(--accent)}
-.chip[aria-pressed="true"]{border-bottom-color:var(--accent);color:var(--accent);font-weight:700}
-
-/* Stage */
-.stage{position:relative;overflow:hidden;aspect-ratio:2/1;border:1px solid var(--card-line);border-radius:var(--r-lg);background:#fff}
-.stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
-.stage.traj{aspect-ratio:1144/561}
-.subhead{margin:2.5rem 0 1rem;font-family:var(--head);font-size:1.2rem;font-weight:700;text-align:center}
-.stage-badge{position:absolute;top:.8rem;left:.8rem;z-index:2;padding:.22rem .7rem;border-radius:4px;background:rgba(22,32,31,.72);color:#fff;font-family:var(--head);font-size:.76rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;pointer-events:none}
-.caption{margin-top:.8rem;font-size:.9rem;line-height:1.6;font-variant-numeric:tabular-nums;text-align:left}
-.fig-no{font-weight:700}
+.btn[aria-disabled="true"]::after{content:"Coming soon";position:absolute;left:50%;top:calc(100% + .7rem);padding:.35rem .7rem;border-radius:.5rem;background:#1A1A1A;color:#fff;font-size:.75rem;white-space:nowrap;opacity:0;pointer-events:none;transform:translate(-50%,-4px);transition:opacity .18s ease,transform .18s ease;z-index:5}
+.btn[aria-disabled="true"]:hover::after,.btn[aria-disabled="true"]:focus-visible::after{opacity:1;transform:translate(-50%,0)}
 
 /* Sections */
-.section{padding:2.5rem 0}
-.section h2{margin-bottom:1.2rem;font-family:var(--head);font-size:1.8rem;font-weight:700;line-height:1.25;letter-spacing:-.01em;text-align:center}
+.section{padding:2.6rem 0}
+.section h2{margin-bottom:1.25rem;font-family:var(--head);font-size:1.875rem;font-weight:700;line-height:1.25;letter-spacing:-.012em;text-align:center}
+.subhead{margin:2.6rem 0 1rem;font-family:var(--head);font-size:1.25rem;font-weight:700;text-align:center}
+.text{font-size:1.02rem;line-height:1.75;text-align:justify;hyphens:auto}
+.caption{margin-top:.85rem;font-size:.9rem;line-height:1.6;font-variant-numeric:tabular-nums;text-align:left}
+.fig-no{font-weight:700}
+
+/* Figures */
+.figure{padding:1.1rem;border:1px solid var(--card-line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--card-shadow)}
+.figure img{width:100%;height:auto;cursor:zoom-in}
 
 /* Key numbers */
-.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-top:2rem;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.stat{padding:1.3rem 1rem;text-align:center}
-.stat + .stat{border-left:1px solid var(--line)}
-.stat b{display:block;font-family:var(--head);font-size:2.2rem;font-weight:700;line-height:1.1;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--accent)}
-.stat span{display:block;margin-top:.35rem;font-size:.88rem}
-@media (max-width:700px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat:nth-child(3){border-left:0}.stat:nth-child(n+3){border-top:1px solid var(--line)}.stat b{font-size:1.8rem}}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-top:2rem;border:1px solid var(--card-line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--card-shadow)}
+.stat{display:flex;align-items:center;justify-content:center;gap:.6rem;padding:.8rem .8rem;text-align:center}
+.stat + .stat{border-left:1px solid var(--card-line)}
+.stat b{flex:none;font-family:var(--head);font-size:1.55rem;font-weight:700;line-height:1.1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat b.o{color:var(--ours)}
+.stat span{font-size:.84rem;line-height:1.3;text-align:left}
 
-/* Gallery */
-.gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6rem}
-.gallery.one{grid-template-columns:1fr}
-.tile{position:relative;margin:0;overflow:hidden;aspect-ratio:2/1;border:1px solid var(--card-line);border-radius:var(--r-md);background:#fff}
-.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.gallery.one .tile{aspect-ratio:2324/2130}
-.gallery.one .tile img{object-fit:contain}
-.tile .label{position:absolute;left:.5rem;bottom:.5rem;z-index:1;padding:.15rem .55rem;border-radius:4px;background:rgba(22,32,31,.72);color:#fff;font-family:var(--head);font-size:.78rem;font-weight:500}
+/* Chips */
+.chips{display:flex;flex-wrap:wrap;justify-content:center;gap:.7rem 2rem;margin-bottom:1.1rem}
+.chip-group{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.5rem}
+.chip-title{margin-right:.35rem;font-family:var(--head);font-size:.8rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase}
+.chip{padding:.36rem .9rem;border:1px solid #D5D8DD;border-radius:8px;background:#fff;font-family:var(--head);font-size:.98rem;cursor:pointer;transition:all .2s ease}
+.chip:hover{border-color:rgba(217,112,42,.55);color:var(--ours-ink)}
+.chip[aria-pressed="true"]{border-color:rgba(217,112,42,.5);background:var(--ours-tint);color:var(--ours-ink);font-weight:700;box-shadow:0 4px 12px -8px rgba(217,112,42,.6)}
+.chip:disabled{opacity:.38;cursor:not-allowed}
+.chip:disabled:hover{border-color:#D5D8DD;color:inherit}
 
-/* Comparison */
-.reveal{position:relative;overflow:hidden;aspect-ratio:2/1;border:1px solid var(--card-line);border-radius:var(--r-lg);background:#fff;--pos:50%;user-select:none}
-.reveal .layer{position:absolute;inset:0}
-.reveal .layer img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.reveal .top{clip-path:inset(0 0 0 var(--pos))}
-.rvline{position:absolute;top:0;bottom:0;left:var(--pos);z-index:2;width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.2);pointer-events:none}
-.rvknob{position:absolute;top:50%;left:50%;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;transform:translate(-50%,-50%)}
+/* Interactive demo */
+.stage{position:relative;overflow:hidden;aspect-ratio:16/9;border:1px solid var(--card-line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--card-shadow);touch-action:none}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
+.stage canvas:active{cursor:grabbing}
+.badge{position:absolute;top:.85rem;left:50%;z-index:2;padding:.26rem .85rem;border-radius:999px;background:var(--frost);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 0 0 1px var(--card-line),0 4px 12px -6px rgba(30,30,60,.25);font-family:var(--head);font-size:.76rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;transform:translateX(-50%);pointer-events:none;white-space:nowrap}
+.tools{position:absolute;top:.8rem;right:.8rem;z-index:2;display:flex;flex-direction:column;align-items:flex-end;gap:.45rem}
+.tool{padding:.24rem .75rem;border:0;border-radius:8px;background:var(--frost);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 0 0 1px var(--card-line),0 4px 12px -8px rgba(30,30,60,.3);font-family:var(--head);font-size:.8rem;cursor:pointer}
+.tool:hover{color:var(--ours-ink)}
+.tool[aria-pressed="true"]{background:var(--ours-tint);color:var(--ours-ink);box-shadow:0 0 0 1px rgba(217,112,42,.35)}
+.legend{position:absolute;left:.8rem;bottom:.8rem;z-index:2;display:flex;flex-wrap:wrap;gap:.35rem .8rem;max-width:calc(100% - 1.6rem);padding:.35rem .7rem;border-radius:8px;background:var(--frost);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 0 0 1px var(--card-line);font-family:var(--head);font-size:.8rem;pointer-events:none}
+.legend span{display:inline-flex;align-items:center;gap:.35rem;white-space:nowrap}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px}
+.legend i.gt{height:0;border-top:2px dashed #4A4A4A;border-radius:0}
+.loading{position:absolute;inset:0;display:grid;place-content:center;font-family:var(--head);font-size:.95rem;pointer-events:none}
+.ctrl{display:flex;align-items:center;gap:1rem;max-width:860px;margin:1.1rem auto 0}
+.play{display:flex;flex:none;align-items:center;justify-content:center;width:38px;height:38px;padding:0;border:0;border-radius:8px;background:var(--ours);box-shadow:0 6px 14px -8px rgba(217,112,42,.9);color:#fff;cursor:pointer}
+.play svg{width:13px;height:13px;fill:currentColor}
+.range{flex:1;min-width:0;accent-color:var(--ours)}
+.ctrl label{flex:none;font-family:var(--head);font-size:.86rem;white-space:nowrap}
+.ctrl output{flex:none;min-width:3.5em;font-size:.84rem;font-variant-numeric:tabular-nums;text-align:right}
+.ate{display:flex;justify-content:center;margin-top:1.1rem;overflow-x:auto}
+.ate table{width:auto;font-size:.9rem}
+.ate th,.ate td{padding:.3rem .85rem}
+.ate th i{display:inline-block;width:.7em;height:.7em;margin-right:.4em;border-radius:50%;vertical-align:-.03em}
+.ate tr.o td{background:var(--ours-tint);font-weight:700}
+
+/* Method */
+.mods{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.9rem;margin-top:1.3rem}
+.mod{padding:1rem 1.05rem;border:1px solid var(--card-line);border-radius:var(--r-md);background:#fff;box-shadow:var(--card-shadow)}
+.mod h3{margin-bottom:.45rem;font-family:var(--head);font-size:1.02rem;font-weight:700;line-height:1.3}
+.mod.new{border-color:rgba(217,112,42,.35);background:linear-gradient(180deg,#FFF9F4 0%,#FFFFFF 60%)}
+.mod.new h3{color:var(--ours-ink)}
+.mod p{font-size:.9rem;line-height:1.6}
+
+/* Rendering comparison */
+.reveal{position:relative;overflow:hidden;aspect-ratio:2/1;border:1px solid var(--card-line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--card-shadow);--pos:50%;user-select:none}
+.reveal img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.reveal .top{position:absolute;inset:0;clip-path:inset(0 0 0 var(--pos))}
+.rvline{position:absolute;top:0;bottom:0;left:var(--pos);z-index:2;width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.15);pointer-events:none}
+.rvknob{position:absolute;top:50%;left:50%;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--ours);color:#fff;transform:translate(-50%,-50%);box-shadow:0 4px 12px -2px rgba(0,0,0,.3)}
 .rvknob svg{width:16px;height:16px}
-.rvtag{position:absolute;bottom:.8rem;z-index:2;padding:.25rem .7rem;border-radius:4px;background:rgba(22,32,31,.72);color:#fff;font-family:var(--head);font-size:.85rem;font-weight:700;pointer-events:none}
-.rvtag.l{left:.8rem}.rvtag.r{right:.8rem}
+.rvtag{position:absolute;bottom:.8rem;z-index:2;padding:.28rem .8rem;border-radius:999px;background:var(--frost);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 0 0 1px var(--card-line);font-family:var(--head);font-size:.86rem;font-weight:700;pointer-events:none}
+.rvtag.l{left:.8rem}.rvtag.r{right:.8rem;color:var(--ours-ink)}
 .rvrange{position:absolute;inset:0;z-index:3;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize}
+.strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.5rem;margin-top:.9rem}
+.strip figure{position:relative;overflow:hidden;border-radius:8px;border:1px solid var(--card-line);cursor:pointer;aspect-ratio:2/1}
+.strip img{width:100%;height:100%;object-fit:cover}
+.strip figcaption{position:absolute;left:.35rem;bottom:.3rem;padding:.05rem .45rem;border-radius:6px;background:var(--frost);font-family:var(--head);font-size:.72rem;font-weight:700}
+.strip figure.on{outline:2px solid var(--ours);outline-offset:1px}
+.strip.wide{grid-template-columns:repeat(5,minmax(0,1fr))}
+.strip.wide figure{aspect-ratio:5/1}
 
-/* Table */
-.table-wrap{overflow-x:auto}
+/* Tables */
+.table-wrap{overflow-x:auto;border:1px solid var(--card-line);border-radius:var(--r-md);background:#fff;box-shadow:var(--card-shadow)}
 table{width:100%;border-collapse:collapse;font-size:.88rem;font-variant-numeric:tabular-nums;white-space:nowrap}
-th,td{padding:.55rem .5rem;text-align:center}
+th,td{padding:.48rem .62rem;text-align:center;border-bottom:1px solid #E4E4E4}
 th:first-child,td:first-child{text-align:left}
-thead tr:first-child{border-top:2px solid var(--ink)}
-thead th{font-family:var(--head);font-weight:700}
-thead tr:last-child th{border-bottom:1px solid var(--ink)}
-tbody tr:last-child{border-bottom:2px solid var(--ink)}
-th.grp,td.grp{border-left:1px solid var(--line)}
-thead tr:first-child th.grp{border-bottom:1px solid var(--line)}
-tbody tr.ours td{background:var(--accent-tint)}
-tbody tr.ours td:first-child{color:var(--accent);font-weight:700}
+thead th{font-family:var(--head);font-weight:700;border-bottom:2px solid #DADADA}
+thead tr:first-child th{border-bottom:1px solid #DADADA}
+th.g,td.g{border-left:1px solid #DADADA}
+tr.grp td{padding-top:.6rem;font-style:italic;font-weight:500;background:#FAFAFA}
+tr.o td{font-weight:700}
+tr.o td:first-child{color:var(--ours-ink)}
+tbody tr:last-child td{border-bottom:0}
+td.f{background:var(--first)} td.s{background:var(--second)}
 td.b{font-weight:700}
-.table-note{margin-top:.8rem;font-size:.85rem;line-height:1.6;text-align:left}
+sup{font-size:.7em;line-height:0}
+.two{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:1.4rem;align-items:start}
 
-pre{margin:0;padding:1.2rem 1.4rem;overflow-x:auto;border-radius:var(--r-md);background:#F6F8F8;border:1px solid var(--card-line);font:400 .85rem/1.6 var(--mono);text-align:left}
-footer{padding:2.5rem 0 3rem;border-top:1px solid var(--line);font-size:.9rem;text-align:center}
+pre{margin:0;padding:1.2rem 1.4rem;overflow-x:auto;border-radius:var(--r-md);background:#fff;border:1px solid var(--card-line);box-shadow:var(--card-shadow);font:400 .85rem/1.6 var(--mono);text-align:left}
+.copy{float:right;margin:-.3rem -.4rem 0 0}
+footer{padding:2.5rem 0 3rem;border-top:1px solid var(--line);font-size:.88rem;text-align:center}
 
-/* Top bar that appears once the header has scrolled away */
-.topbar{position:fixed;top:0;left:0;right:0;z-index:40;background:#fff;border-bottom:1px solid var(--line);transform:translateY(-100%);transition:transform .25s ease}
+/* Top bar after the header */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:40;background:rgba(255,255,255,.86);-webkit-backdrop-filter:saturate(180%) blur(14px);backdrop-filter:saturate(180%) blur(14px);border-bottom:1px solid var(--line);transform:translateY(-100%);transition:transform .3s ease}
 .topbar.show{transform:none}
-.topbar .container{display:flex;align-items:center;gap:1.5rem;height:54px}
-.topbar .brand{flex:none;font-family:var(--head);font-size:1.1rem;font-weight:700;text-decoration:none;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.topbar .container{display:flex;align-items:center;gap:1.5rem;height:56px}
+.topbar .brand{flex:none;font-family:var(--head);font-size:1.15rem;font-weight:700;text-decoration:none;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .topbar nav{display:flex;gap:.2rem;margin-left:auto;overflow-x:auto;scrollbar-width:none}
-.topbar nav::-webkit-scrollbar{display:none}
-.topbar nav a{padding:.3rem .7rem;font-family:var(--head);font-size:.9rem;text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent}
-.topbar nav a:hover{color:var(--accent)}
-.topbar nav a.on{border-bottom-color:var(--accent);font-weight:700}
-.topbar .btn{height:2.1rem;padding-inline:.95rem;font-size:.92rem}
-@media (max-width:860px){.topbar nav{display:none}.topbar .btn{margin-left:auto}}
+.topbar nav a{padding:.35rem .7rem;border-radius:999px;font-family:var(--head);font-size:.9rem;text-decoration:none;white-space:nowrap}
+.topbar nav a:hover{background:rgba(217,112,42,.08)}
+.topbar nav a.on{background:rgba(217,112,42,.13);font-weight:700}
 
-@media (max-width:600px){
-  .container{padding-inline:1rem}
+/* Lightbox */
+.lb{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:3vh 3vw;background:rgba(14,14,20,.78);cursor:zoom-out}
+.lb img{max-width:100%;max-height:94vh;border-radius:8px;background:#fff}
+
+@media (max-width:900px){.mods{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:1fr}.topbar nav{display:none}}
+@media (max-width:700px){
   .hero{padding-top:3rem}
-  .authors{font-size:1.05rem}
-  .gallery{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stat:nth-child(3){border-left:0}
+  .stat:nth-child(n+3){border-top:1px solid var(--card-line)}
+  .stat{flex-direction:column;gap:.15rem}.stat span{text-align:center;font-size:.76rem}
+  .stage{aspect-ratio:1/1}
+  .mods{grid-template-columns:1fr}
+  .strip{grid-template-columns:repeat(3,minmax(0,1fr))}
   .section h2{font-size:1.55rem}
-  .chips{gap:.3rem 1rem}
-  .chip{padding:.35rem .55rem;font-size:.95rem}
+  .ctrl{flex-wrap:wrap}
+  .legend{font-size:.7rem}
+  .text{text-align:left}
 }
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
 </style>
 </head>
-
 <body>
-<div class="topbar" id="topbar"><div class="container"><a class="brand" href="#top">CoSphere-SLAM</a><nav id="topnav"></nav><a class="btn btn-paper" data-link="paper" href="#">Paper</a></div></div>
-<header class="hero" id="top"><div class="container">
-  <h1 class="title"><span class="wordmark">CoSphere-SLAM</span>: Collaborative Panoramic Gaussian SLAM on the Sphere</h1>
-  <p class="authors">Anonymous Authors</p>
-  <p class="venue">Under review</p>
-  <div class="links">
-    <a class="btn btn-paper" data-link="paper" href="#"><svg viewBox="0 0 384 512" aria-hidden="true"><!-- Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0) --><path d="M64 0C28.7 0 0 28.7 0 64V448c0 35.3 28.7 64 64 64H320c35.3 0 64-28.7 64-64V160H256c-17.7 0-32-14.3-32-32V0H64zM256 0V128H384L256 0zM112 256H272c8.8 0 16 7.2 16 16s-7.2 16-16 16H112c-8.8 0-16-7.2-16-16s7.2-16 16-16zm0 64H272c8.8 0 16 7.2 16 16s-7.2 16-16 16H112c-8.8 0-16-7.2-16-16s7.2-16 16-16zm0 64H272c8.8 0 16 7.2 16 16s-7.2 16-16 16H112c-8.8 0-16-7.2-16-16s7.2-16 16-16z"/></svg>Paper</a>
-    <a class="btn btn-arxiv" data-link="arxiv" href="#"><svg viewBox="0 0 448 512" aria-hidden="true"><!-- arXiv glyph from Academicons 1.9.4 (SIL OFL 1.1) --><g transform="matrix(1.5499998,0,0,-1.5499998,-123.19936,553.59966)"><path d="m 119.65,351.996 c -5.84961,0.13477 -11.1943,-3.29883 -13.502,-8.67578 -2.19629,-5.27051 -0.61914,-8.9668 4.19727,-15.8652 7.05469,-10.3799 78.8242,-96.5625 78.8242,-96.5625 l -15.8828,-14.8633 c -13.3809,-13.3779 -13.9561,-31.333 -1.50977,-43.7754 l 18.4922,-17.6133 -51.5977,-63.377 c -4.00586,-4.26758 -6.48535,-11.7559 -4.24805,-17.1309 2.27832,-5.53613 7.69727,-9.12891 13.6836,-9.07031 3.83398,0.0957 7.43262,1.87402 9.83789,4.86133 l 61.3691,57.0566 94.5762,-90.0703 c 3.19434,-3.08398 7.44336,-4.83984 11.8828,-4.91016 1.60449,0.0039 3.19824,0.245117 4.73242,0.714844 5.7793,1.80566 10.249,6.41797 11.8711,12.252 1.2998,5.47363 -0.27637,11.2334 -4.18164,15.2832 l -83.0859,100.011996 14.8789,13.834 c 11.0957,10.0029 11.1543,27.3906 0.12695,37.4688 l -16.2949,15.6309 56.2559,66.4434 0.0742,0.0859 0.0664,0.0899 c 5.02734,6.53125 7.43164,11.5615 4.83984,17.9395 -3.13379,5.96875 -8.69727,10.29 -15.2559,11.8516 -0.67676,0.0908 -1.35938,0.13574 -2.04297,0.13671 l -0.004,-0.0117 c -4.42871,-0.27051 -8.61035,-2.13086 -11.7754,-5.24023 l -0.13086,-0.10743 -0.12304,-0.11132 -65.207,-59.127 -89.8965,86.2402 c 0,0 -5.33398,6.47754 -10.9707,6.61133 z m 178.104,-33.041 c 0.47852,-0.002 0.95703,-0.0332 1.43164,-0.0957 4.84277,-1.33301 8.95605,-4.54004 11.4316,-8.91016 1.44922,-3.5625 1.00293,-6.45703 -4.19727,-13.2148 l -56.0586,-66.2188 -26.375,25.3027 64.9551,58.9062 c 2.33887,2.41504 5.46484,3.91113 8.8125,4.2168 v 0.0137 z M 192.436,227.402 334.446,57.244 c 2.78711,-3.48926 4.5293,-6.97949 3.3418,-10.9121 -1.16113,-4.30273 -4.43457,-7.71777 -8.68555,-9.05664 -1.08105,-0.333984 -2.20508,-0.503906 -3.33594,-0.505859 -3.20801,0.07617 -6.26953,1.35645 -8.57617,3.58789 l -142.033,135.284999 c -11.1719,11.1719 -9.48242,26.0195 1.39258,36.8945 z"/></g></svg>arXiv</a>
-    <a class="btn btn-github" data-link="code" href="#"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>Code</a>
+
+<header class="topbar" id="topbar">
+  <div class="container">
+    <a class="brand" href="#top">CoSphere-SLAM</a>
+    <nav id="topnav">
+      <a href="#overview">Overview</a>
+      <a href="#demo">Interactive Demo</a>
+      <a href="#method">Method</a>
+      <a href="#rendering">Rendering</a>
+      <a href="#benchmarks">Benchmarks</a>
+      <a href="#bibtex">BibTeX</a>
+    </nav>
   </div>
-</div></header>
+</header>
 
-<section class="section" id="overview" data-nav="Overview" style="padding-top:1.25rem"><div class="container">
-  <div class="chips" id="teaser-chips"></div>
-  <div class="stage" id="teaser-stage"></div>
-  <p class="caption" id="teaser-caption"></p>
-  <div class="stats" id="stats"></div>
-</div></section>
-
-<section class="section" id="results" data-nav="Results"><div class="container">
-  <h2>Results</h2>
-  <div class="chips" id="results-chips"></div>
-  <div class="gallery" id="results-grid"></div>
-  <p class="caption" id="results-caption"></p>
-  <h3 class="subhead">Trajectories against PanoGS-SLAM</h3>
-  <div class="stage traj" id="traj-stage"></div>
-  <p class="caption" id="traj-caption"></p>
-</div></section>
-
-<section class="section" id="comparison" data-nav="Comparison"><div class="container">
-  <h2>Comparison</h2>
-  <div class="chips" id="reveal-chips"></div>
-  <div class="reveal" id="reveal">
-    <div class="layer base" id="reveal-base"></div>
-    <div class="layer top" id="reveal-top"></div>
-    <div class="rvline"><span class="rvknob"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/></svg></span></div>
-    <span class="rvtag l">PanoGS-SLAM</span><span class="rvtag r">CoSphere-SLAM</span>
-    <input class="rvrange" id="reveal-range" type="range" min="0" max="100" step="0.1" value="50" aria-label="Divider position">
+<section class="hero" id="top">
+  <div class="container">
+    <h1 class="title"><span class="wordmark">CoSphere-SLAM</span>: Multi-Agent Panoramic Gaussian Splatting SLAM with Spherical Loop Closure</h1>
+    <p class="authors">Anonymous Authors</p>
+    <p class="venue">Under review</p>
+    <div class="links">
+      <a class="btn btn-paper" aria-disabled="true" tabindex="0"><svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6zM14 3.5V8h4.5zM8.5 12h7v1.5h-7zm0 3.5h7V17h-7z"/></svg>Paper</a>
+      <a class="btn btn-arxiv" aria-disabled="true" tabindex="0"><svg viewBox="0 0 24 24"><path d="M4 4l7.5 8L4 20h3l6-6.4 6 6.4h3l-7.5-8L22 4h-3l-6 6.4L7 4z"/></svg>arXiv</a>
+      <a class="btn btn-github" aria-disabled="true" tabindex="0"><svg viewBox="0 0 24 24"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.6 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A11.5 11.5 0 0 0 23.5 12C23.5 5.7 18.3.5 12 .5z"/></svg>Code</a>
+    </div>
   </div>
-</div></section>
+</section>
 
-<section class="section" id="benchmarks" data-nav="Benchmarks"><div class="container">
-  <h2>Benchmarks</h2>
-  <div class="table-wrap"><table id="bench"></table></div>
-  <p class="table-note" id="bench-note"></p>
-</div></section>
+<section class="section" id="overview" style="padding-top:.75rem">
+  <div class="container">
+    <figure class="figure">
+      <img src="assets/img/teaser.jpg" alt="Four panoramic agents merged into one Gaussian map with their trajectories and inter-agent loop closures" width="2228" height="1067">
+    </figure>
+    <p class="caption"><span class="fig-no">Figure 1.</span> Four panoramic agents (top left) are merged into one Gaussian map (top right) with their trajectories and inter-agent loop closures. Bottom left: a loop closure at opposite headings, a symmetric layout, and the scale drift of each agent along its trajectory. Bottom right: trajectories, ATE, and PSNR on three development scenes, with the ground truth dashed and our results in orange.</p>
 
-<section class="section" id="bibtex" data-nav="BibTeX"><div class="container narrow">
-  <h2>BibTeX</h2>
-<pre>@article{cosphereslam2026,
-  title  = {{CoSphere-SLAM}: Collaborative Panoramic Gaussian {SLAM} on the Sphere},
+    <div class="stats">
+      <div class="stat"><b>50</b><span>Scenes in the Multi-Agent<br>panoramic benchmark</span></div>
+      <div class="stat"><b>4</b><span>Panoramic agents<br>per sequence</span></div>
+      <div class="stat"><b class="o">0.082&thinsp;m</b><span>Per-agent ATE over<br>45 test scenes</span></div>
+      <div class="stat"><b class="o">100%</b><span>Test agents<br>tracked</span></div>
+    </div>
+  </div>
+
+  <div class="container narrow">
+    <h2 style="margin-top:2.6rem">Abstract</h2>
+    <p class="text">Dense collaborative mapping is essential for search and rescue, building inspection, and warehouse automation, where panoramic cameras let each agent observe its entire surroundings in a single frame. However, panoramic agents meet at arbitrary headings, and searching the full relative rotation produces false loop closures in symmetric rooms. Each monocular agent also drifts in scale between the many places where agents meet, so a single similarity per agent cannot align the agents. We propose CoSphere-SLAM, the first Multi-Agent Gaussian splatting SLAM framework for panoramic cameras, whose spherical loop closure correlates panoramas over SO(3) to connect agents at any relative heading and rejects symmetric false loop closures by cycle consistency among three agents. A directional global optimization then corrects the scale drift inside every trajectory and aligns all agents in one frame. An omni Gaussian fusion renders every direction of the panorama without projection, merges the maps of all agents, and refines the merged map against their panoramas. Experiments on a Multi-Agent panoramic benchmark of 50 scenes show that CoSphere-SLAM achieves the lowest mean trajectory error among the compared Single-Agent and Multi-Agent methods and renders higher quality maps than MAGS-SLAM.</p>
+  </div>
+</section>
+
+<section class="section" id="demo">
+  <div class="container">
+    <h2>Interactive Demo</h2>
+    <div class="chips">
+      <div class="chip-group" id="scene-chips"><span class="chip-title">Scene</span></div>
+    </div>
+    <div class="chips" style="margin-bottom:1.2rem">
+      <div class="chip-group" id="multi-chips"><span class="chip-title">Multi-Agent</span></div>
+      <div class="chip-group" id="single-chips"><span class="chip-title">Single-Agent</span></div>
+    </div>
+    <div class="stage" id="stage">
+      <canvas id="gl"></canvas>
+      <div class="badge" id="badge"></div>
+      <div class="tools">
+        <button class="tool" id="t-reset" type="button">Reset View</button>
+        <button class="tool" id="t-top" type="button">Top View</button>
+        <button class="tool" id="t-map" type="button" aria-pressed="true">Merged Map</button>
+        <button class="tool" id="t-gt" type="button" aria-pressed="true">Ground Truth</button>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div class="loading" id="loading">Loading</div>
+    </div>
+    <div class="ctrl">
+      <button class="play" id="play" type="button" aria-label="Replay the keyframes"><svg viewBox="0 0 12 12" id="play-icon"><path d="M2 1l9 5-9 5z"/></svg></button>
+      <input class="range" id="prog" type="range" min="0" max="1000" value="1000" aria-label="Keyframe progress">
+      <output id="prog-out">100%</output>
+      <label for="cut">Ceiling Cut</label>
+      <input class="range" id="cut" type="range" min="-10" max="35" value="8" style="max-width:150px" aria-label="Ceiling cut height above the cameras">
+      <output id="cut-out" style="min-width:4.2em">0.8 m</output>
+    </div>
+    <div class="ate" id="ate"></div>
+    <p class="caption"><span class="fig-no">Figure 2.</span> Keyframe trajectories of the four agents on the five development scenes, drawn over the merged Gaussian map of CoSphere-SLAM (Gaussian centers in their base color). Multi-Agent methods align all agents to the ground truth with one Sim(3), and Single-Agent methods align each agent on its own. Mean is the per-agent ATE (m) of Table 1, Joint is the error of all agents under one Sim(3), and a dagger marks a mean over the tracked agents. Drag to rotate, right-drag or Shift-drag to pan, and scroll to zoom. The ceiling cut hides the map above a height over the cameras so that the floor plan stays visible.</p>
+  </div>
+</section>
+
+<section class="section" id="method">
+  <div class="container">
+    <h2>Method</h2>
+    <figure class="figure">
+      <img src="assets/img/pipeline.jpg" alt="Overview of CoSphere-SLAM" width="2800" height="1058">
+    </figure>
+    <p class="caption"><span class="fig-no">Figure 3.</span> Overview of CoSphere-SLAM. Each agent runs panoramic Gaussian splatting SLAM and sends keyframe messages to the server. The server finds loop closures by spherical correlation, keeps those consistent over three agents, corrects the scale drift, and merges the agents by the omni Gaussian fusion.</p>
+    <div class="mods">
+      <div class="mod"><h3>Per-Agent Panoramic Gaussian SLAM</h3><p>Each agent resamples its panoramas into the six faces of a cube map and tracks the six faces jointly with one body pose per keyframe. It maintains a Gaussian map rendered directly on the sphere.</p></div>
+      <div class="mod new"><h3>Spherical Loop Closure</h3><p>A panorama is a function on the sphere of viewing directions. Spherical correlation of two feature spheres over SO(3) finds their relative rotation at any heading. Cycle consistency among three agents rejects the false loop closures of symmetric rooms.</p></div>
+      <div class="mod new"><h3>Directional Global Optimization</h3><p>Every keyframe receives its own similarity, so the pose graph follows the scale drift inside each trajectory. Each loop closure constrains the direction and the length of its translation with separate precisions, and each rendezvous counts as one measurement.</p></div>
+      <div class="mod new"><h3>Omni Gaussian Fusion</h3><p>Every agent and the server evaluate each Gaussian along the omnidirectional viewing rays. Each Gaussian moves with the similarity of its keyframe into the merged map, and the global map refinement fits the merged map to the panoramas of all agents.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="rendering">
+  <div class="container">
+    <h2>Rendering</h2>
+    <div class="chips">
+      <div class="chip-group" id="rc-scenes"><span class="chip-title">Scene</span></div>
+      <div class="chip-group" id="rc-methods"><span class="chip-title">Compare</span></div>
+    </div>
+    <div class="reveal" id="reveal">
+      <img id="rv-base" alt="">
+      <div class="top"><img id="rv-top" alt=""></div>
+      <div class="rvline"><div class="rvknob"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M6 3L1 8l5 5zM10 3l5 5-5 5z"/></svg></div></div>
+      <span class="rvtag l" id="rv-l"></span><span class="rvtag r">CoSphere-SLAM</span>
+      <input class="rvrange" id="rv-range" type="range" min="0" max="100" value="50" aria-label="Comparison divider">
+    </div>
+    <div class="strip" id="rc-strip"></div>
+    <p class="caption"><span class="fig-no">Figure 4.</span> <span id="rc-cap"></span> Each method renders its own map at its own estimated poses on the same frame. Scene 002 shows a band of the panorama, and the other scenes show a crop of the front cube face. For Scene 002, CP-SLAM and MAGS-SLAM render two pinhole front views, so the divider compares Scene 002 only with the ground truth and ODGS-SLAM. Drag the divider to compare.</p>
+
+    <h3 class="subhead">Rendering Quality</h3>
+    <div class="container narrow" style="padding:0;max-width:620px">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th></th><th>Method</th><th>PSNR&thinsp;&uarr;</th><th>SSIM&thinsp;&uarr;</th><th>LPIPS&thinsp;&darr;</th></tr></thead>
+          <tbody>
+            <tr><td rowspan="2" style="vertical-align:middle">Full</td><td>MAGS-SLAM</td><td>26.35</td><td>0.872</td><td>0.311</td></tr>
+            <tr class="o"><td style="text-align:center">Ours</td><td class="b">28.52</td><td class="b">0.903</td><td class="b">0.233</td></tr>
+            <tr><td rowspan="2" style="vertical-align:middle">Masked</td><td>MAGS-SLAM</td><td>26.95</td><td>0.879</td><td>0.290</td></tr>
+            <tr class="o"><td style="text-align:center">Ours</td><td class="b">30.78</td><td class="b">0.918</td><td class="b">0.207</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="caption"><span class="fig-no">Table 3.</span> Rendering quality of the front cube face on the same frames. Full counts every pixel, and Masked excludes the camera operator. Mean over the 38 test scenes where MAGS-SLAM renders at least one agent.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="benchmarks">
+  <div class="container">
+    <h2>Benchmarks</h2>
+    <div class="table-wrap">
+      <table id="tab1">
+        <thead>
+          <tr><th></th><th class="g" colspan="6">Development</th><th class="g" colspan="5">Longest Test Scenes</th><th class="g" colspan="2">Test</th></tr>
+          <tr><th>Method</th><th class="g">002</th><th>005</th><th>006</th><th>007</th><th>009</th><th>Mean</th><th class="g">055</th><th>011</th><th>047</th><th>003</th><th>043</th><th class="g">ATE</th><th>Track</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="caption"><span class="fig-no">Table 1.</span> Per-agent ATE (m) on the Multi-Agent panoramic benchmark built from Holo360D, with each sequence divided among four agents. Test is the mean over all 45 test scenes. A dagger marks a mean over the tracked agents, a dash marks no tracked agent, and Track is the fraction of tracked test agents. Shading marks the <span style="background:var(--first);padding:0 .3em;border-radius:3px">best</span> and <span style="background:var(--second);padding:0 .3em;border-radius:3px">second best</span>.</p>
+
+    <h3 class="subhead">Same Scenes as Each Baseline</h3>
+    <div class="container narrow" style="padding:0;max-width:720px">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th></th><th></th><th class="g" colspan="2">ATE</th><th class="g" colspan="2">Joint</th></tr>
+            <tr><th>Method</th><th>Scenes</th><th class="g">Baseline</th><th>Ours</th><th class="g">Baseline</th><th>Ours</th></tr>
+          </thead>
+          <tbody id="tab2"></tbody>
+        </table>
+      </div>
+      <p class="caption"><span class="fig-no">Table 2.</span> Comparison on the test scenes where each baseline tracks every agent. Single-Agent baselines are compared with Ours (Single Agent), and Multi-Agent baselines with CoSphere-SLAM. Joint (m) is the error of all agents under one Sim(3). Our rows average all 45 test scenes.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="bibtex">
+  <div class="container narrow">
+    <h2>BibTeX</h2>
+    <pre id="bib"><button class="tool copy" id="copy" type="button">Copy</button>@article{cosphereslam2026,
+  title  = {{CoSphere-SLAM}: Multi-Agent Panoramic Gaussian Splatting {SLAM} with Spherical Loop Closure},
   author = {Anonymous Authors},
   year   = {2026}
 }</pre>
-</div></section>
+  </div>
+</section>
 
-<footer><div class="container narrow">&copy; 2026 The CoSphere-SLAM authors. Last updated October 2026.</div></footer>
+<footer>
+  <div class="container">
+    <p>&copy; 2026 The CoSphere-SLAM authors</p>
+    <p style="margin-top:.35rem;font-size:.82rem">Page layout adapted from the Nerfies project page. Last updated November 2026.</p>
+  </div>
+</footer>
 
 <script>
-/* Fill in a URL to activate a button; an empty URL says "Coming soon" on hover. */
-const LINKS = {paper: '', arxiv: '', code: ''};
+"use strict";
+/* ---------- shared ---------- */
+const $ = s => document.querySelector(s);
+const AG = ['#B85450', '#9673A6', '#82B366', '#6C8EBF'];
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+function chip(label, on, cb, dis) {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = label;
+  b.setAttribute('aria-pressed', on ? 'true' : 'false'); if (dis) b.disabled = true; b.onclick = cb; return b;
+}
+function press(group, btn) { group.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', c === btn ? 'true' : 'false')); }
 
-const STATS = [
-  {value: '5 × 5', label: 'Scenes × handheld panoramic robots'},
-  {value: '360°', label: 'Field of view per camera'},
-  {value: '0.047 m', label: 'Mean per-robot keyframe ATE (PanoGS-SLAM alone: 0.120 m)'},
-  {value: '−61%', label: 'Trajectory error relative to each robot alone'}
+/* ---------- top bar and section highlight ---------- */
+(() => {
+  const bar = $('#topbar'), hero = $('#top'), links = [...document.querySelectorAll('#topnav a')];
+  new IntersectionObserver(e => bar.classList.toggle('show', !e[0].isIntersecting), {rootMargin: '-60px 0px 0px 0px'}).observe(hero);
+  const secs = links.map(a => document.querySelector(a.getAttribute('href')));
+  const upd = () => { let k = -1; secs.forEach((s, i) => { if (s.getBoundingClientRect().top < 140) k = i; }); links.forEach((a, i) => a.classList.toggle('on', i === k)); };
+  addEventListener('scroll', upd, {passive: true}); upd();
+})();
+
+/* ---------- lightbox for the figures ---------- */
+document.querySelectorAll('.figure img').forEach(img => img.onclick = () => {
+  const lb = document.createElement('div'); lb.className = 'lb'; lb.innerHTML = `<img src="${img.src}" alt="">`;
+  lb.onclick = () => lb.remove(); document.body.appendChild(lb);
+});
+addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.lb').forEach(x => x.remove()); });
+
+/* ---------- Table 1 and Table 2 (values of the paper) ---------- */
+const T1 = [
+  ['g', 'Single-Agent'],
+  ['DROID-SLAM', '1.011 2.050 2.548 0.843 1.934 1.677 4.891 7.389 1.162 2.972 1.840 1.610† 99%'],
+  ['DPVO', '1.836 2.373 2.601 1.159 1.802 1.954 5.993 6.084 1.289 2.622 1.741 1.576 100%'],
+  ['MASt3R-SLAM', '0.771 0.236 0.232† 0.915 0.638 0.559† 3.671† 4.080 0.215 1.457 0.152 0.651† 88%'],
+  ['TTT3R', '3.037 2.002 1.726 1.349 1.935 2.010 10.749 9.196 0.933 4.455 1.985 2.542† 99%'],
+  ['VGGT-Long', '2.792 1.106 1.589 1.573 2.741 1.960 9.062 8.446 1.217 4.588 0.910 2.000† 97%'],
+  ['ODGS-SLAM', '2.605 0.753 3.173† 1.942† 3.009 2.296† 3.609† – 2.216† 2.018 1.837† 1.613† 63%'],
+  ['OpenVSLAM', '2.376 0.231 0.180s 0.349 0.556 0.738 4.901 2.993 0.529 4.010 0.066s 0.543† 94%'],
+  ['Ours (Single Agent)', '0.152s 0.145s 0.330 0.026s 0.041s 0.139s 0.521s 0.242s 0.089s 0.288f 0.099 0.150 100%', 1],
+  ['g', 'Multi-Agent'],
+  ['CP-SLAM', '5.540† 4.023† 2.635† 2.597† 4.357† 3.830† – 13.807† – 4.392† – 3.869† 19%'],
+  ['MAGiC-SLAM', '– – – – – – – – – – – – 0%'],
+  ['MAC-Ego3D', '– 4.151 – – 4.232 4.191† 14.031 13.200 – 5.172 2.314 4.080† 53%'],
+  ['MAGS-SLAM', '3.443 1.999† 2.839 1.063† 1.998 2.268† – – – 3.316† 2.067† 1.353† 83%'],
+  ['CoMo3R-SLAM', '2.284† – – – 1.116 1.700† 0.691† 0.949 0.692† 1.525 0.159 0.606† 56%'],
+  ['OpenVSLAM', '3.743 0.443 0.184 0.972 0.581 1.184 4.473† 3.073 0.382† 2.990 0.173 0.715† 88%'],
+  ['CoSphere-SLAM (Ours)', '0.023f 0.019f 0.013f 0.014f 0.037f 0.021f 0.155f 0.161f 0.053f 0.300s 0.034f 0.082 100%', 1],
 ];
+const GCOL = new Set([0, 6, 11]);
+$('#tab1 tbody').innerHTML = T1.map(r => {
+  if (r[0] === 'g') return `<tr class="grp"><td colspan="14">${r[1]}</td></tr>`;
+  const cells = r[1].split(' ').map((v, i) => {
+    let c = GCOL.has(i) ? 'g' : '';
+    if (v.endsWith('f')) { c += ' f'; v = v.slice(0, -1); } else if (v.endsWith('s')) { c += ' s'; v = v.slice(0, -1); }
+    v = v.replace('†', '<sup>†</sup>');
+    return `<td class="${c.trim()}">${v}</td>`;
+  }).join('');
+  return `<tr${r[2] ? ' class="o"' : ''}><td>${r[0]}</td>${cells}</tr>`;
+}).join('');
+const T2 = [['g', 'Single-Agent'], ['DROID-SLAM', 44, '1.620', '0.149'], ['DPVO', 45, '1.576', '0.150'], ['MASt3R-SLAM', 31, '0.677', '0.169'],
+  ['TTT3R', 44, '2.585', '0.152'], ['VGGT-Long', 42, '2.098', '0.156'], ['ODGS-SLAM', 10, '1.501', '0.290'], ['OpenVSLAM', 38, '0.611', '0.157'],
+  ['Ours (Single Agent)', 45, '–', '0.150', '–', '–', 1], ['g', 'Multi-Agent'], ['MAC-Ego3D', 24, '4.080', '0.120', '5.050', '0.223'],
+  ['MAGS-SLAM', 32, '1.031', '0.048', '3.165', '0.100'], ['CoMo3R-SLAM', 13, '0.583', '0.071', '5.054', '0.109'],
+  ['OpenVSLAM (Multi)', 35, '0.824', '0.083', '1.882', '0.134'], ['CoSphere-SLAM (Ours)', 45, '–', '0.082', '–', '0.152', 1]];
+$('#tab2').innerHTML = T2.map(r => r[0] === 'g' ? `<tr class="grp"><td colspan="6">${r[1]}</td></tr>` :
+  `<tr${r[6] ? ' class="o"' : ''}><td>${r[0]}</td><td>${r[1]}</td><td class="g">${r[2]}</td><td class="b">${r[3]}</td><td class="g">${r[4] ?? '–'}</td><td class="${r[5] && r[5] !== '–' ? 'b' : ''}">${r[5] ?? '–'}</td></tr>`).join('');
 
-/* Holo360D Indoor_002: one held-out panorama per robot. */
-const FRAMES = [1160, 1175, 1045, 1120, 1145];
-const ROBOTS = FRAMES.map((f, k) => ({
-  name: `Robot ${k}`, frame: f,
-  gt: `assets/render/r${k}_gt.jpg`, single: `assets/render/r${k}_single.jpg`, ours: `assets/render/r${k}_ours.jpg`
-}));
-
-/* Benchmark table; the better value in each column is set in bold (lower ATE). */
-const BENCH = {
-  note: 'Five Holo360D scenes, each split into five handheld panoramic robots; PanoGS-SLAM runs on each robot alone. Each entry is the keyframe ATE RMSE (m) averaged over the five robots of the scene, every robot aligned to its reference trajectory by its own Sim(3); lower is better. CoSphere-SLAM is better than PanoGS-SLAM on at least four of the five robots in every scene. With one Sim(3) shared by all five robots CoSphere-SLAM reaches 0.116, 0.088, 0.032, 0.019 and 0.114 m.',
-  groups: [['ATE (m)', 6]],
-  columns: ['Indoor_002', 'Indoor_005', 'Indoor_006', 'Indoor_007', 'Indoor_009', 'Mean'],
-  digits: [3, 3, 3, 3, 3, 3],
-  lower: [true, true, true, true, true, true],
-  rows: [['PanoGS-SLAM', 0.223, 0.136, 0.104, 0.052, 0.086, 0.120]],
-  ours: ['CoSphere-SLAM (ours)', 0.081, 0.065, 0.029, 0.015, 0.044, 0.047]
-};
-
-const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
-const img = (src, alt) => { const i = new Image(); i.src = src; i.alt = alt || ''; i.loading = 'lazy'; return i; };
-
-function stage(host, src, alt, badge) {
-  host.replaceChildren(img(src, alt));
-  if (badge) host.insertAdjacentHTML('beforeend', `<span class="stage-badge">${esc(badge)}</span>`);
-}
-function tile(src, label) {
-  const f = document.createElement('figure');
-  f.className = 'tile';
-  f.append(img(src, label));
-  if (label) f.insertAdjacentHTML('beforeend', `<span class="label">${esc(label)}</span>`);
-  return f;
-}
-function chips(host, groups, onPick, titled = false) {
-  const all = [];
-  groups.forEach(g => {
-    const wrap = document.createElement('div');
-    wrap.className = 'chip-group';
-    if (titled && g.title) wrap.insertAdjacentHTML('beforeend', `<span class="chip-title">${esc(g.title)}</span>`);
-    g.items.forEach(it => {
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'chip'; b.textContent = it.label;
-      b.addEventListener('click', () => pick(b, it));
-      wrap.append(b); all.push([b, it]);
+/* ---------- rendering comparison ---------- */
+(() => {
+  const SC = ['002', '003', '005', '006', '009', '030'];
+  const SPLIT = {'002': 'Development', '003': 'Test', '005': 'Development', '006': 'Development', '009': 'Development', '030': 'Test'};
+  const M = [['gt', 'Ground Truth'], ['cpslam', 'CP-SLAM'], ['odgs', 'ODGS-SLAM'], ['mags', 'MAGS-SLAM']];
+  const ok = (s, m) => !(s === '002' && (m === 'cpslam' || m === 'mags')) && !(s === '030' && m === 'cpslam');
+  let sc = '005', me = 'mags';
+  const gS = $('#rc-scenes'), gM = $('#rc-methods'), rv = $('#reveal'), strip = $('#rc-strip');
+  SC.forEach(s => gS.appendChild(chip(s, s === sc, e => { sc = s; press(gS, e.target); if (!ok(sc, me)) me = 'odgs'; draw(); })));
+  M.forEach(([k, l]) => gM.appendChild(chip(l, k === me, () => { me = k; draw(); })));
+  function draw() {
+    gM.querySelectorAll('.chip').forEach((c, i) => { const k = M[i][0]; c.disabled = !ok(sc, k); c.setAttribute('aria-pressed', k === me ? 'true' : 'false'); });
+    $('#rv-base').src = `assets/rc/${sc}_${me}.jpg`; $('#rv-top').src = `assets/rc/${sc}_ours.jpg`;
+    $('#rv-l').textContent = M.find(x => x[0] === me)[1];
+    rv.style.aspectRatio = sc === '002' ? '5 / 1' : '2 / 1';
+    $('#rc-cap').textContent = `Scene ${sc} (${SPLIT[sc].toLowerCase()} set), ${M.find(x => x[0] === me)[1]} against CoSphere-SLAM.`;
+    strip.className = 'strip' + (sc === '002' ? ' wide' : '');
+    strip.innerHTML = '';
+    [...M, ['ours', 'CoSphere-SLAM']].forEach(([k, l]) => {
+      const f = document.createElement('figure');
+      if (sc === '030' && k === 'cpslam') { f.innerHTML = `<div style="display:grid;place-content:center;height:100%;background:#F2F2F2;font-family:var(--head);font-size:.8rem;font-weight:700">Failed</div><figcaption>${l}</figcaption>`; strip.appendChild(f); return; }
+      f.innerHTML = `<img src="assets/rc/${sc}_${k}.jpg" alt="${l}, Scene ${sc}" loading="lazy"><figcaption>${l}</figcaption>`;
+      if (k === me) f.classList.add('on');
+      if (k !== 'ours' && ok(sc, k)) f.onclick = () => { me = k; draw(); };
+      strip.appendChild(f);
     });
-    host.append(wrap);
-  });
-  function pick(btn, it) { all.forEach(([b]) => b.setAttribute('aria-pressed', String(b === btn))); onPick(it); }
-  if (all.length) pick(all[0][0], all[0][1]);
-}
-
-document.querySelectorAll('[data-link]').forEach(a => {
-  const url = LINKS[a.dataset.link];
-  if (url) { a.href = url; a.target = '_blank'; a.rel = 'noopener'; return; }
-  a.setAttribute('aria-disabled', 'true');
-  a.addEventListener('click', e => e.preventDefault());
-});
-
-/* Overview: merged-map rendering at each robot's held-out view */
-chips(document.getElementById('teaser-chips'), [{title: 'Holo360D Indoor_002', items: ROBOTS.map(r => ({label: r.name, r}))}], ({r}) => {
-  stage(document.getElementById('teaser-stage'), r.ours, `CoSphere-SLAM rendering, ${r.name}`, r.name);
-  document.getElementById('teaser-caption').innerHTML = `<span class="fig-no">Figure 1.</span> Holo360D Indoor_002, ${esc(r.name)}: rendering of the merged five-robot CoSphere-SLAM map at held-out frame ${r.frame}.`;
-}, true);
-
-/* Results: all robots at once, or one robot with its three panels */
-chips(document.getElementById('results-chips'), [{items: [{label: 'All robots', all: true}, ...ROBOTS.map(r => ({label: r.name, r}))]}], it => {
-  const grid = document.getElementById('results-grid'), cap = document.getElementById('results-caption');
-  if (it.all) {
-    grid.className = 'gallery one';
-    grid.replaceChildren(tile('assets/img/render_indoor002_heldout.jpg'));
-    cap.innerHTML = '<span class="fig-no">Figure 2.</span> One held-out panorama per robot. Left to right: ground truth, PanoGS-SLAM run on each robot alone, and the merged CoSphere-SLAM map of all five robots. Black regions in the ground truth are masked out.';
-  } else {
-    const r = it.r;
-    grid.className = 'gallery';
-    grid.replaceChildren(tile(r.gt, 'Ground truth'), tile(r.single, 'PanoGS-SLAM'), tile(r.ours, 'CoSphere-SLAM'));
-    cap.innerHTML = `<span class="fig-no">Figure 2.</span> ${esc(r.name)}, held-out frame ${r.frame}. Left to right: ground truth, PanoGS-SLAM run on this robot alone, and the merged CoSphere-SLAM map of all five robots.`;
   }
-});
-stage(document.getElementById('traj-stage'), 'assets/img/traj_5scenes.png', 'Keyframe trajectories of the five robots in five scenes');
-document.getElementById('traj-caption').innerHTML = '<span class="fig-no">Figure 3.</span> Keyframe trajectories of all five robots in five Holo360D scenes (rows), top view, coloured by position error (m), reference dashed. Left: each robot alone with PanoGS-SLAM, aligned separately (ATE per robot); right: CoSphere-SLAM, all robots under one Sim(3) alignment. <a href="assets/img/traj_5scenes.pdf">PDF</a>';
-
-/* Comparison */
-(function () {
-  const range = document.getElementById('reveal-range'), box = document.getElementById('reveal');
-  chips(document.getElementById('reveal-chips'), [{items: ROBOTS.map(r => ({label: r.name, r}))}], ({r}) => {
-    document.getElementById('reveal-base').replaceChildren(img(r.single, 'PanoGS-SLAM'));
-    document.getElementById('reveal-top').replaceChildren(img(r.ours, 'CoSphere-SLAM'));
-  });
-  const update = () => box.style.setProperty('--pos', range.value + '%');
-  range.addEventListener('input', update); update();
+  $('#rv-range').oninput = e => rv.style.setProperty('--pos', e.target.value + '%');
+  draw();
 })();
 
-/* Benchmarks */
-(function () {
-  const all = [...BENCH.rows, BENCH.ours];
-  const best = BENCH.columns.map((_, j) => { const v = all.map(r => r[j + 1]); return BENCH.lower[j] ? Math.min(...v) : Math.max(...v); });
-  const starts = new Set(); let k = 0; BENCH.groups.forEach(([, n]) => { starts.add(k); k += n; });
-  const td = (v, j) => `<td class="${[starts.has(j) ? 'grp' : '', v === best[j] ? 'b' : ''].join(' ').trim()}">${v.toFixed(BENCH.digits[j])}</td>`;
-  const tr = (r, ours) => `<tr${ours ? ' class="ours"' : ''}><td>${esc(r[0])}</td>${r.slice(1).map(td).join('')}</tr>`;
-  document.getElementById('bench').innerHTML =
-    '<thead><tr><th></th>' + BENCH.groups.map(([g, n]) => `<th class="grp" colspan="${n}">${esc(g)}</th>`).join('') + '</tr>' +
-    '<tr><th>Method</th>' + BENCH.columns.map((c, j) => `<th${starts.has(j) ? ' class="grp"' : ''}>${esc(c)}</th>`).join('') + '</tr></thead>' +
-    '<tbody>' + BENCH.rows.map(r => tr(r, false)).join('') + tr(BENCH.ours, true) + '</tbody>';
-  document.getElementById('bench-note').innerHTML = `<span class="fig-no">Table 1.</span> ${esc(BENCH.note)}`;
-})();
+/* ---------- BibTeX copy ---------- */
+$('#copy').onclick = () => { const t = $('#bib').innerText.replace(/^Copy\s*/, ''); navigator.clipboard?.writeText(t); $('#copy').textContent = 'Copied'; setTimeout(() => $('#copy').textContent = 'Copy', 1500); };
 
-document.getElementById('stats').innerHTML = STATS.map(s => `<div class="stat"><b>${esc(s.value)}</b><span>${esc(s.label)}</span></div>`).join('');
+/* ---------- interactive demo: WebGL viewer ---------- */
+(() => {
+  const SCENES = ['002', '005', '006', '007', '009'];
+  const METH = {
+    ours: ['CoSphere-SLAM (Ours)', 1], mags: ['MAGS-SLAM', 1], como3r: ['CoMo3R-SLAM', 1],
+    single: ['Ours (Single Agent)', 0], mast3r: ['MASt3R-SLAM', 0], droid: ['DROID-SLAM', 0], dpvo: ['DPVO', 0], ttt3r: ['TTT3R', 0], vlong: ['VGGT-Long', 0]};
+  const MEAN = {  // development columns of Table 1
+    ours: '0.023 0.019 0.013 0.014 0.037', single: '0.152 0.145 0.330 0.026 0.041', mags: '3.443 1.999† 2.839 1.063† 1.998',
+    como3r: '2.284† – – – 1.116', mast3r: '0.771 0.236 0.232† 0.915 0.638', droid: '1.011 2.050 2.548 0.843 1.934',
+    dpvo: '1.836 2.373 2.601 1.159 1.802', ttt3r: '3.037 2.002 1.726 1.349 1.935', vlong: '2.792 1.106 1.589 1.573 2.741'};
+  let scene = '002', method = 'ours', D = null, showMap = true, showGT = true, prog = 1, playing = false;
+  const cache = {};
+  const cv = $('#gl'), gl = cv.getContext('webgl', {antialias: true, alpha: false});
+  if (!gl) { $('#loading').textContent = 'WebGL is not available in this browser'; return; }
+  gl.clearColor(1, 1, 1, 1); gl.clear(gl.COLOR_BUFFER_BIT);
 
-/* Top bar: appears after the header, marks the section in view */
-(function () {
-  const bar = document.getElementById('topbar'), nav = document.getElementById('topnav'), hero = document.querySelector('.hero');
-  const secs = [...document.querySelectorAll('[data-nav]')].filter(s => s.id !== 'overview');
-  const links = secs.map(s => { const a = document.createElement('a'); a.href = '#' + s.id; a.textContent = s.dataset.nav; nav.append(a); return a; });
-  function update() {
-    bar.classList.toggle('show', hero.getBoundingClientRect().bottom < 0);
-    const y = window.innerHeight * .4; let cur = -1;
-    secs.forEach((s, i) => { if (s.getBoundingClientRect().top <= y) cur = i; });
-    links.forEach((a, i) => a.classList.toggle('on', i === cur));
+  // chips
+  const gS = $('#scene-chips'), gMu = $('#multi-chips'), gSi = $('#single-chips');
+  SCENES.forEach(s => gS.appendChild(chip('Scene ' + s, s === scene, e => { press(gS, e.target); load(s); })));
+  Object.entries(METH).forEach(([k, [l, multi]]) => (multi ? gMu : gSi).appendChild(chip(l, k === method, () => { method = k; refreshChips(); build(); })));
+  function refreshChips() { [gMu, gSi].forEach(g => g.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', c.textContent === METH[method][0] ? 'true' : 'false'))); }
+
+  // shaders
+  function prog_(vs, fs) {
+    const p = gl.createProgram();
+    [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]].forEach(([t, src]) => { const s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s)); gl.attachShader(p, s); });
+    gl.linkProgram(p); return p;
   }
-  window.addEventListener('scroll', update, {passive: true}); update();
+  const PP = prog_(`attribute vec3 p;attribute vec3 c;uniform mat4 M;uniform float sz,zc;varying vec3 vc;varying float cut;
+    void main(){gl_Position=M*vec4(p,1.);gl_PointSize=clamp(sz/gl_Position.w,1.5,9.);vc=c;cut=p.z>zc?1.:0.;}`,
+    `precision mediump float;varying vec3 vc;varying float cut;void main(){if(cut>.5)discard;vec2 d=gl_PointCoord-.5;if(dot(d,d)>.25)discard;gl_FragColor=vec4(vc,1.);}`);
+  const LP = prog_(`attribute vec3 a;attribute vec3 b;attribute float sd;attribute float k;attribute float u;uniform mat4 M;uniform vec2 res;uniform float w;varying float vk;varying float vu;
+    void main(){vec4 pa=M*vec4(a,1.),pb=M*vec4(b,1.);vec2 d=(pb.xy/pb.w-pa.xy/pa.w)*res;float L=length(d);vec2 n=L>1e-6?vec2(-d.y,d.x)/L:vec2(0.,1.);pa.xy+=n*sd*w/res*pa.w;gl_Position=pa;vk=k;vu=u;}`,
+    `precision mediump float;uniform vec3 col;uniform float pr,dash,al;varying float vk;varying float vu;void main(){if(vk>pr)discard;if(dash>0.&&fract(vu/dash)>.55)discard;gl_FragColor=vec4(col,al);}`);
+  const MP = prog_(`attribute vec3 p;uniform mat4 M;uniform float sz;void main(){gl_Position=M*vec4(p,1.);gl_PointSize=sz;}`,
+    `precision mediump float;uniform vec3 col;void main(){vec2 d=gl_PointCoord-.5;float r=dot(d,d);if(r>.25)discard;gl_FragColor=r>.16?vec4(.1,.1,.1,1.):vec4(col,1.);}`);
+
+  // camera
+  let cam = {}, fitc = null;
+  function fit(top) {
+    if (!D) return;
+    const g = D.gt.flat(); let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    g.forEach(p => { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); });
+    const ext = Math.max(x1 - x0, (y1 - y0) * cv.clientWidth / cv.clientHeight * .75, 4);
+    fitc = {tx: (x0 + x1) / 2, ty: (y0 + y1) / 2, tz: 0, yaw: -Math.PI / 2, pitch: top ? 1.55 : 0.95, dist: ext * (top ? 1.25 : 1.15)};
+    cam = {...fitc}; spin = !top;
+  }
+  const mul = (a, b) => { const o = new Float32Array(16); for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + j] * b[i * 4 + k]; o[i * 4 + j] = s; } return o; };
+  function matrix() {
+    const asp = cv.width / cv.height, f = 1 / Math.tan(22.5 * Math.PI / 180), n = cam.dist * .02, fa = cam.dist * 20;
+    const P = new Float32Array([f / asp, 0, 0, 0, 0, f, 0, 0, 0, 0, (fa + n) / (n - fa), -1, 0, 0, 2 * fa * n / (n - fa), 0]);
+    const cp = Math.cos(cam.pitch), e = [cam.tx + cam.dist * cp * Math.cos(cam.yaw), cam.ty + cam.dist * cp * Math.sin(cam.yaw), cam.tz + cam.dist * Math.sin(cam.pitch)];
+    let z = [e[0] - cam.tx, e[1] - cam.ty, e[2] - cam.tz]; const zl = Math.hypot(...z); z = z.map(v => v / zl);
+    let up = [0, 0, 1]; if (Math.abs(z[2]) > .999) up = [-Math.cos(cam.yaw), -Math.sin(cam.yaw), 0];
+    let x = [up[1] * z[2] - up[2] * z[1], up[2] * z[0] - up[0] * z[2], up[0] * z[1] - up[1] * z[0]]; const xl = Math.hypot(...x); x = x.map(v => v / xl);
+    const y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]];
+    const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    const V = new Float32Array([x[0], y[0], z[0], 0, x[1], y[1], z[1], 0, x[2], y[2], z[2], 0, -dot(x, e), -dot(y, e), -dot(z, e), 1]);
+    return mul(P, V);
+  }
+
+  // geometry
+  let mapBuf = null, nPts = 0, zmin = 0, zmax = 1, lines = [], gtLines = [], heads = [];
+  function ribbon(pts) {
+    const n = pts.length; if (n < 2) return null;
+    const v = []; let u = 0;
+    for (let i = 0; i < n - 1; i++) {
+      const P = pts[i], Q = pts[i + 1], kP = i / (n - 1), kQ = (i + 1) / (n - 1), du = Math.hypot(Q[0] - P[0], Q[1] - P[1], Q[2] - P[2]);
+      if (du > 3) { u += du; continue; }    // keep tracking failures as gaps
+      const A = [...P, ...Q, 1, kP, u], B = [...P, ...Q, -1, kP, u], C = [...Q, ...P, -1, kQ, u + du], E = [...Q, ...P, 1, kQ, u + du];
+      v.push(...A, ...B, ...C, ...B, ...E, ...C); u += du;
+    }
+    const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(v), gl.STATIC_DRAW);
+    return {buf, n: v.length / 9, pts};
+  }
+  let token = 0;
+  async function load(s) {
+    scene = s; const my = ++token; $('#loading').hidden = false; $('#loading').textContent = 'Loading';
+    if (!cache[s]) {
+      const [j, b] = await Promise.all([fetch(`assets/demo/scene_${s}.json`).then(r => r.json()), fetch(`assets/demo/map_${s}.bin`).then(r => r.arrayBuffer())]);
+      cache[s] = {j, b};
+    }
+    if (my !== token) return;
+    D = cache[s].j; const m = D.map, q = new Int16Array(cache[s].b, 0, m.n * 3), c = new Uint8Array(cache[s].b, m.n * 6, m.n * 3);
+    const arr = new Float32Array(m.n * 6);
+    for (let i = 0; i < m.n; i++) for (let k = 0; k < 3; k++) { arr[i * 6 + k] = m.min[k] + (q[i * 3 + k] + 32768) / 65535 * (m.max[k] - m.min[k]); arr[i * 6 + 3 + k] = c[i * 3 + k] / 255; }
+    if (!mapBuf) mapBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, mapBuf); gl.bufferData(gl.ARRAY_BUFFER, arr, gl.STATIC_DRAW); nPts = m.n;
+    zmin = m.min[2]; zmax = m.max[2];
+    gtLines.forEach(l => l && gl.deleteBuffer(l.buf)); gtLines = D.gt.map(ribbon);
+    $('#loading').hidden = true; fit(false); build();
+  }
+  function build() {
+    if (!D) return;
+    lines.forEach(l => l && gl.deleteBuffer(l.buf)); lines = D.methods[method].agents.map(a => ribbon(a));
+    $('#badge').textContent = `Scene ${scene} · ${METH[method][0]}`;
+    $('#legend').innerHTML = AG.map((c, i) => `<span><i style="background:${c}"></i>Agent ${i + 1}</span>`).join('') + (showGT ? '<span><i class="gt"></i>Ground Truth</span>' : '');
+    ate(); dirty = true;
+  }
+  function ate() {
+    const si = SCENES.indexOf(scene), f = v => v == null ? '–' : v.toFixed(3);
+    const row = (k, cls) => {
+      const m = D.methods[k], mean = MEAN[k].split(' ')[si].replace('†', '<sup>†</sup>');
+      const per = m.agents.map((a, i) => a.length >= 3 && m.ate[i] != null ? f(m.ate[i]) : '–');
+      return `<tr class="${cls}"><td>${METH[k][0]}</td>${per.map(v => `<td>${v}</td>`).join('')}<td class="g b">${mean}</td><td>${k === 'ours' ? f(D.methods.ours.joint) : '–'}</td></tr>`;
+    };
+    $('#ate').innerHTML = `<table><thead><tr><th>ATE (m), Scene ${scene}</th>${AG.map((c, i) => `<th><i style="background:${c}"></i>Agent ${i + 1}</th>`).join('')}<th class="g">Mean</th><th>Joint</th></tr></thead><tbody>${method === 'ours' ? '' : row(method, '')}${row('ours', 'o')}</tbody></table>`;
+  }
+
+  // drawing
+  let dirty = true, spin = true;
+  function resize() { const r = devicePixelRatio || 1, w = Math.round(cv.clientWidth * r), h = Math.round(cv.clientHeight * r); if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; dirty = true; } }
+  function attr(p, name, size, stride, off) { const l = gl.getAttribLocation(p, name); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, size, gl.FLOAT, false, stride * 4, off * 4); return l; }
+  function drawRibbon(l, col, w, dash, al, pr) {
+    if (!l) return; gl.bindBuffer(gl.ARRAY_BUFFER, l.buf);
+    const ls = [attr(LP, 'a', 3, 9, 0), attr(LP, 'b', 3, 9, 3), attr(LP, 'sd', 1, 9, 6), attr(LP, 'k', 1, 9, 7), attr(LP, 'u', 1, 9, 8)];
+    gl.uniform3fv(gl.getUniformLocation(LP, 'col'), col); gl.uniform1f(gl.getUniformLocation(LP, 'w'), w * (devicePixelRatio || 1));
+    gl.uniform1f(gl.getUniformLocation(LP, 'dash'), dash); gl.uniform1f(gl.getUniformLocation(LP, 'al'), al); gl.uniform1f(gl.getUniformLocation(LP, 'pr'), pr);
+    gl.drawArrays(gl.TRIANGLES, 0, l.n); ls.forEach(x => gl.disableVertexAttribArray(x));
+  }
+  const cutEl = $('#cut');
+  function frame() {
+    resize();
+    if (spin && !playing) { cam.yaw += .0012; dirty = true; }
+    if (D && dirty) {
+      dirty = false; gl.viewport(0, 0, cv.width, cv.height); gl.clearColor(1, 1, 1, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      const M = matrix();
+      if (showMap) {
+        gl.enable(gl.DEPTH_TEST); gl.useProgram(PP); gl.bindBuffer(gl.ARRAY_BUFFER, mapBuf);
+        const a = attr(PP, 'p', 3, 6, 0), b = attr(PP, 'c', 3, 6, 3);
+        gl.uniformMatrix4fv(gl.getUniformLocation(PP, 'M'), false, M);
+        gl.uniform1f(gl.getUniformLocation(PP, 'sz'), cv.height * .028);
+        gl.uniform1f(gl.getUniformLocation(PP, 'zc'), cutEl.value >= 35 ? 1e9 : cutEl.value / 10);
+        gl.drawArrays(gl.POINTS, 0, nPts); gl.disableVertexAttribArray(a); gl.disableVertexAttribArray(b);
+      }
+      gl.disable(gl.DEPTH_TEST); gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.useProgram(LP); gl.uniformMatrix4fv(gl.getUniformLocation(LP, 'M'), false, M); gl.uniform2f(gl.getUniformLocation(LP, 'res'), cv.width / 2, cv.height / 2);
+      if (showGT) gtLines.forEach(l => drawRibbon(l, [.18, .18, .18], 1.1, .25, .85, 2));
+      lines.forEach((l, i) => { if (l) drawRibbon(l, hex(AG[i]), 2.2, 0, 1, prog); });
+      // current keyframe of each agent
+      const hp = []; lines.forEach(l => { if (!l) return; const p = l.pts, k = Math.min(p.length - 1, Math.floor(prog * (p.length - 1))); hp.push(p[k]); });
+      if (prog < 1 && hp.length) {
+        gl.useProgram(MP); const hb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, hb); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(hp.flat()), gl.STREAM_DRAW);
+        const a = attr(MP, 'p', 3, 3, 0); gl.uniformMatrix4fv(gl.getUniformLocation(MP, 'M'), false, M); gl.uniform1f(gl.getUniformLocation(MP, 'sz'), 13 * (devicePixelRatio || 1));
+        let j = 0; lines.forEach((l, i) => { if (!l) return; gl.uniform3fv(gl.getUniformLocation(MP, 'col'), hex(AG[i])); gl.drawArrays(gl.POINTS, j++, 1); });
+        gl.disableVertexAttribArray(a); gl.deleteBuffer(hb);
+      }
+      gl.disable(gl.BLEND);
+    }
+    if (playing) {
+      prog = Math.min(1, prog + 1 / 600); setProg(prog); dirty = true;
+      if (prog >= 1) setPlay(false);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // interaction
+  let drag = null; const ptr = new Map();
+  cv.addEventListener('contextmenu', e => e.preventDefault());
+  cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); ptr.set(e.pointerId, [e.clientX, e.clientY]); drag = {x: e.clientX, y: e.clientY, pan: e.button === 2 || e.shiftKey, d0: null}; spin = false; });
+  cv.addEventListener('pointerup', e => { ptr.delete(e.pointerId); if (!ptr.size) drag = null; });
+  cv.addEventListener('pointercancel', e => { ptr.delete(e.pointerId); if (!ptr.size) drag = null; });
+  cv.addEventListener('pointermove', e => {
+    if (!drag) return;
+    if (ptr.has(e.pointerId)) ptr.set(e.pointerId, [e.clientX, e.clientY]);
+    if (ptr.size === 2) {
+      const [p, q] = [...ptr.values()], d = Math.hypot(p[0] - q[0], p[1] - q[1]);
+      if (drag.d0) cam.dist = Math.max(1, Math.min(200, cam.dist * drag.d0 / d)); drag.d0 = d; dirty = true; return;
+    }
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY;
+    if (drag.pan) {
+      const s = cam.dist / cv.clientHeight * .83, cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);
+      cam.tx += (sy * dx - cy * dy) * s; cam.ty += (-cy * dx - sy * dy) * s;
+    } else { cam.yaw -= dx * .006; cam.pitch = Math.max(.08, Math.min(1.56, cam.pitch + dy * .005)); }
+    dirty = true;
+  });
+  cv.addEventListener('wheel', e => { e.preventDefault(); spin = false; cam.dist = Math.max(1, Math.min(200, cam.dist * Math.exp(e.deltaY * .0012))); dirty = true; }, {passive: false});
+  $('#t-reset').onclick = () => { fit(false); dirty = true; };
+  $('#t-top').onclick = () => { fit(true); dirty = true; };
+  const tog = (el, f) => el.onclick = () => { const v = el.getAttribute('aria-pressed') !== 'true'; el.setAttribute('aria-pressed', v); f(v); build(); };
+  tog($('#t-map'), v => showMap = v); tog($('#t-gt'), v => showGT = v);
+  cutEl.oninput = () => { $('#cut-out').textContent = cutEl.value >= 35 ? 'Off' : (cutEl.value / 10).toFixed(1) + ' m'; dirty = true; };
+  const progEl = $('#prog');
+  function setProg(p) { progEl.value = Math.round(p * 1000); $('#prog-out').textContent = Math.round(p * 100) + '%'; }
+  progEl.oninput = () => { prog = progEl.value / 1000; setProg(prog); setPlay(false); dirty = true; };
+  function setPlay(v) { playing = v; $('#play-icon').innerHTML = v ? '<path d="M2 1h3v10H2zM7 1h3v10H7z"/>' : '<path d="M2 1l9 5-9 5z"/>'; }
+  $('#play').onclick = () => { if (playing) { setPlay(false); return; } if (prog >= 1) prog = 0; spin = false; setPlay(true); };
+  new ResizeObserver(() => dirty = true).observe(cv);
+  // start loading when the demo comes near the viewport
+  const io = new IntersectionObserver(e => { if (e[0].isIntersecting) { io.disconnect(); load(scene); requestAnimationFrame(frame); } }, {rootMargin: '600px'});
+  io.observe($('#stage'));
 })();
 </script>
 </body>
