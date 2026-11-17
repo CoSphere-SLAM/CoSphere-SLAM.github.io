@@ -294,6 +294,13 @@ table.dense th,table.dense td{padding:.52rem .4rem}
 #demo .chips{gap:.65rem 1.8rem;margin-bottom:.8rem}
 .nw{white-space:nowrap}
 @media (max-width:640px){.affil .nw{white-space:normal}}
+.supp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.9rem}
+.supp-item{padding:1rem 1.15rem;border:1px solid var(--warm-line);border-radius:var(--r-md);background:#fff;box-shadow:var(--sheet-shadow)}
+.supp-item h3{margin:0 0 .4rem;font-family:var(--serif);font-size:1rem;font-weight:700;line-height:1.35}
+.supp-item h3 span{margin-right:.45rem;font:600 .82em var(--mono);color:var(--brand)}
+.supp-item p{margin:0;font-size:.9rem;line-height:1.6;color:#3A3D44}
+.supp-lead{margin:0 auto 1.1rem;max-width:760px;font-size:.95rem;line-height:1.7;text-align:center;color:#3A3D44}
+@media (max-width:760px){.supp-grid{grid-template-columns:1fr}}
 </style>
 </head>
 
@@ -480,6 +487,25 @@ table.dense th,table.dense td{padding:.52rem .4rem}
   year    = {2026}
 }</pre>
 </div></section>
+
+<section class="section" id="supplementary" data-nav="Supplementary"><div class="container">
+  <h2><span class="kicker">08</span>Supplementary Material</h2>
+  <p class="supp-lead">The supplementary material provides the following details beyond the main paper.</p>
+  <div class="supp-grid">
+    <div class="supp-item"><h3><span>S1</span>Parameters</h3><p>All hyperparameters of the panoramic agents, spherical loop closure, directional global optimization and omnidirectional Gaussian fusion, fixed across Holo360D and 360Loc.</p></div>
+    <div class="supp-item"><h3><span>S2</span>Results on All Scenes</h3><p>Per-agent ATE of every method on all 50 Holo360D scenes, and estimated trajectories on four development scenes.</p></div>
+    <div class="supp-item"><h3><span>S3</span>Additional Analysis</h3><p>Single-agent tracking, joint pose-graph optimization, revisit closures, the drifted corridor branch of Scene 027, the symmetric Scenes 001 and 021, and communication and runtime.</p></div>
+    <div class="supp-item"><h3><span>S4</span>Implementation Details</h3><p>Cube-map rig, panoramic depth prior, spherical Gaussian map, compact messages, ring descriptor, geometric verification, cluster selection, loop constraint and pose graph, loop noise model, map merging and global refinement, and loop closure thresholds.</p></div>
+    <div class="supp-item"><h3><span>S5</span>Derivations</h3><p>Spherical correlation, cycle consistency, per-keyframe scale, the loop constraint, rendering along rays, and map merging.</p></div>
+    <div class="supp-item"><h3><span>S6</span>Benchmark and Baseline Protocol</h3><p>How the multi-agent Holo360D benchmark is built from single sequences, how each baseline is run, and the protocol behind Figure 1.</p></div>
+    <div class="supp-item"><h3><span>S7</span>Rendering Quality</h3><p>Front-face rendering on the test scenes with SSIM and masked metrics, and an omnidirectional 3DGS comparison at 2048 &times; 1024 with multi-agent scene coverage.</p></div>
+    <div class="supp-item"><h3><span>S8</span>Results on 360Loc</h3><p>Per-session ATE, joint ATE and verified cross-session closures for each building, and all multi-session baselines across the 18 day and night sessions.</p></div>
+    <div class="supp-item"><h3><span>S9</span>Sensitivity</h3><p>One-at-a-time sweeps of the cluster radius, robust kernel and scale random-walk regularization over the 45 test scenes.</p></div>
+    <div class="supp-item"><h3><span>S10</span>Module Replacements</h3><p>Replacing the backend with MAGS-SLAM association, SO(3) search with yaw-only search, flow directions with depth directions, and ray evaluation with projective cube-face 3DGS.</p></div>
+    <div class="supp-item"><h3><span>S11</span>Inter-Agent Meetings by Relative Orientation</h3><p>Fraction of inter-agent meetings connected by a verified closure in each relative-orientation bin, against yaw-only search and front-face matching.</p></div>
+  </div>
+</div></section>
+
 
 <footer><div class="container">CoSphere-SLAM Project Page<p class="meta">All experiments use one fixed parameter set across Holo360D and 360Loc on a single NVIDIA A100 GPU.</p></div></footer>
 
