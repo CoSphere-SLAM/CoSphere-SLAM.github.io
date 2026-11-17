@@ -368,7 +368,7 @@ table.dense th,table.dense td{padding:.52rem .4rem}
     </details>
   </div>
   <div class="figure" style="margin-top:1.5rem">
-    <div class="slot pan"><img src="assets/teaser.png?v=1117t" alt="CoSphere-SLAM aligns four panoramic agents into one 3D Gaussian map"></div>
+    <div class="slot pan"><img src="assets/teaser.png?v=1117m" alt="CoSphere-SLAM aligns four panoramic agents into one 3D Gaussian map"></div>
   </div>
   <p class="pan-hint">Swipe horizontally to inspect details</p>
   <p class="figure-caption"><span class="fig-no">Figure 1.</span> Collaborative panoramic Gaussian splatting SLAM with CoSphere-SLAM. Four monocular panoramic agents at top left are aligned into one 3D Gaussian map at top center with 360&deg; rendering at top right on Scene 002. While the bottom left shows a loop closure at opposite headings, a symmetric layout, and scale drift, the bottom right compares trajectories, single-agent ATE or multi-agent joint ATE, and masked front-face PSNR across three development scenes against dashed ground truth, with RICP registering ODGS-SLAM maps via RANSAC and ICP.</p>
@@ -555,13 +555,13 @@ const RESULTS = [
       {cells: ['CoMo3R-SLAM', '2.284†', '–', '–', '–', '1.116', '1.700†', '0.691†', '0.949', '0.692†', '1.525', '0.159', '0.606†', '56%']},
       {sec: 'Multi-Agent, Panorama'},
       {cells: ['OpenVSLAM-M', '3.743', '0.443', '0.184', '0.972', '0.581', '1.184', '4.473', '3.073', '0.382†', '2.990', '0.173', '0.715†', '88%']},
-      {cells: ['CoSphere-SLAM (Ours)', '0.023', '0.019', '0.013', '0.014', '0.037', '0.021', '0.155', '0.161', '0.053', '0.300', '0.034', '0.082', '100%'], ours: true, boldIdx: [0,1,2,3,4,5,6,7,8,9,10,11,12]}
+      {cells: ['Ours (Multi)', '0.023', '0.019', '0.013', '0.014', '0.037', '0.021', '0.155', '0.161', '0.053', '0.300', '0.034', '0.082', '100%'], ours: true, boldIdx: [0,1,2,3,4,5,6,7,8,9,10,11,12]}
     ]
   },
   {
     label: 'Paired Test Trajectories',
     no: 'Table 2.',
-    note: 'Test trajectory comparison (ATE in m) after map refinement where each baseline tracks all agents. Single- and multi-agent baselines pair with Ours (Single) and CoSphere-SLAM, Scenes counts valid scenes, and bottom rows cover all 45 scenes.',
+    note: 'Test trajectory comparison (ATE in m) after map refinement where each baseline tracks all agents. Single- and multi-agent baselines pair with Ours (Single) and Ours (Multi), Scenes counts valid scenes, and bottom rows cover all 45 scenes.',
     groups: [['', 1], ['ATE (m) ↓', 2], ['Joint ATE (m) ↓', 2]],
     columns: ['Scenes', 'Baseline', 'Ours', 'Baseline', 'Ours'],
     rows: [
@@ -579,7 +579,7 @@ const RESULTS = [
       {cells: ['MAGS-SLAM', '32', '1.031', '0.048', '3.165', '0.100'], boldIdx: [2,4]},
       {cells: ['CoMo3R-SLAM', '13', '0.583', '0.071', '5.054', '0.109'], boldIdx: [2,4]},
       {cells: ['OpenVSLAM-M', '35', '0.824', '0.083', '1.882', '0.134'], boldIdx: [2,4]},
-      {cells: ['CoSphere-SLAM (Ours)', '45', '–', '0.082', '–', '0.152'], ours: true, boldIdx: [2,4]}
+      {cells: ['Ours (Multi)', '45', '–', '0.082', '–', '0.152'], ours: true, boldIdx: [2,4]}
     ]
   },
   {
@@ -606,7 +606,7 @@ const RESULTS = [
       {cells: ['PFGS360', '80%', '0.212†', '21.20', '0.650', '–']},
       {cells: ['Ours (Single)', '100%', '0.139', '28.54', '0.736', '24.28'], boldIdx: [0]},
       {cells: ['w/o Global Map Refinement', '100%', '0.055', '18.23', '0.598', '17.81'], boldIdx: [0]},
-      {cells: ['CoSphere-SLAM (Ours)', '100%', '0.021', '28.95', '0.745', '27.80'], ours: true, boldIdx: [0,1,2,3,4]}
+      {cells: ['Ours (Multi)', '100%', '0.021', '28.95', '0.745', '27.80'], ours: true, boldIdx: [0,1,2,3,4]}
     ]
   },
   {
@@ -622,7 +622,7 @@ const RESULTS = [
       {cells: ['MAGS-SLAM', '2.04†', '14.41', '20.10', '–', '34.62', '83%']},
       {cells: ['ODGS+RICP', '16.39†', '–', '–', '–', '33.66', '67%']},
       {cells: ['OpenVSLAM-M', '0.38†', '–', '0.14', '–', '–', '72%'], boldIdx: [2]},
-      {cells: ['CoSphere-SLAM (Ours)', '0.30', '0.22', '0.35', '0.44', '0.39', '100%'], ours: true, boldIdx: [0,1,3,4,5]}
+      {cells: ['Ours (Multi)', '0.30', '0.22', '0.35', '0.44', '0.39', '100%'], ours: true, boldIdx: [0,1,3,4,5]}
     ]
   },
   {
@@ -633,7 +633,7 @@ const RESULTS = [
     columns: ['Scene 002', 'Scene 005', 'Scene 007', 'Total'],
     rows: [
       {cells: ['ODGS+RICP', '3,869', '5,454', '5,809', '15,132']},
-      {cells: ['CoSphere-SLAM (Ours)', '1,260', '867', '986', '3,113'], ours: true, boldIdx: [0,1,2,3]}
+      {cells: ['Ours (Multi)', '1,260', '867', '986', '3,113'], ours: true, boldIdx: [0,1,2,3]}
     ]
   }
 ];
@@ -656,7 +656,7 @@ const ABLATION = {
     {cells: ['w/ Projective Cube-Face 3DGS', '0.068†', '0.077†', '–', '–']},
     {cells: ['w/o Global Map Refinement', '0.055', '0.069', '0.095', '0.166']},
     {sec: 'Full System'},
-    {cells: ['CoSphere-SLAM (Ours)', '0.021', '0.028', '0.082', '0.152'], ours: true, boldIdx: [0,1,2,3]}
+    {cells: ['Ours (Multi)', '0.021', '0.028', '0.082', '0.152'], ours: true, boldIdx: [0,1,2,3]}
   ]
 };
 
@@ -775,7 +775,7 @@ function pressD(group, btn) { group.querySelectorAll('.chip').forEach(c => c.set
 (() => {
   const SCENES = ['002', '005', '006', '007', '009'];
   const METH = {
-    ours: ['CoSphere-SLAM (Ours)', 1], mags: ['MAGS-SLAM', 1], como3r: ['CoMo3R-SLAM', 1],
+    ours: ['Ours (Multi)', 1], mags: ['MAGS-SLAM', 1], como3r: ['CoMo3R-SLAM', 1],
     single: ['Ours (Single)', 0], mast3r: ['MASt3R-SLAM', 0], droid: ['DROID-SLAM', 0], dpvo: ['DPVO', 0], ttt3r: ['TTT3R', 0], vlong: ['VGGT-Long', 0]};
   const MEAN = {  // development columns of Table 1
     ours: '0.023 0.019 0.013 0.014 0.037', single: '0.152 0.145 0.330 0.026 0.041', mags: '3.443 1.999† 2.839 1.063† 1.998',
